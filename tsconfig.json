@@ -12,6 +12,9 @@
     },
     "files": [
         "typings/main.d.ts",
-        "ng2-intro.ts"
+        "ng2-intro.ts",
+        "./src/intro.config.ts",
+        "./src/intro.service.ts",
+        "./src/intro.directive.ts"
     ]
 }

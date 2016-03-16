@@ -4,7 +4,9 @@
 
 'use strict';
 
-//import {Intro} from './src/intro.component';
+import {Intro} from './src/intro.directive';
+import {IntroOptions, IntroConfig} from './src/intro.config';
+import {IntroService} from './src/intro.service';
 
 //export * from './src/intro.component';
 
