@@ -4,11 +4,11 @@
 
 'use strict';
 
-import {Intro} from './src/intro.component';
+//import {Intro} from './src/intro.component';
 
-export * from './src/toasty.component';
+//export * from './src/intro.component';
 
-export default {
-  providers: [ToastyConfig, ToastyService],
-  directives: [Toasty, Toast]
-}
+//export default {
+//  providers: [IntroConfig, IntroService],
+//  directives: [IntroContainer, Intro]
+//}
