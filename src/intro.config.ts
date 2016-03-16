@@ -48,6 +48,15 @@ export class IntroOptions {
     {}
 }
 
+export class IntroStep {
+    
+    constructor(
+        public selector:string,
+        public intro: string,
+        public step:number
+    ) {}
+}
+
 export class IntroConfig {
 
 }
