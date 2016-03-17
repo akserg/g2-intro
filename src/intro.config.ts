@@ -3,7 +3,7 @@
 // https://github.com/akserg/ng2-intro
 
 export class IntroOptions {
-    
+
     constructor(
         /* Next button label in tooltip box */
         public nextLabel:string = 'Next &rarr;',
@@ -44,19 +44,23 @@ export class IntroOptions {
         /* Default hint position */
         public hintPosition:string = 'top-middle',
         /* Hint button label */
-        public hintButtonLabel:string = 'Got it') 
+        public hintButtonLabel:string = 'Got it')
     {}
 }
 
 export class IntroStep {
-    
+
     constructor(
         public selector:string,
+        public element:HTMLElement,
         public intro: string,
-        public step:number
+        public step:number,
+        public position:string,
+        public tooltipClass:string,
+        public highlightClass:string
     ) {}
 }
 
-export class IntroConfig {
-
+export class IntroConfig extends IntroOptions {
+    tooltipPosition:string = 'bottom';
 }

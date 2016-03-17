@@ -2,78 +2,178 @@
 // This project is licensed under the terms of the MIT license.
 // https://github.com/akserg/ng2-intro
 
+import {isPresent} from 'angular2/src/facade/lang';
+
 import {Intro} from './intro.directive';
 import {IntroOptions, IntroConfig, IntroStep} from './intro.config';
 
 export class IntroService {
-    
-    private _targetElement:HTMLElement;
-    private _introItems:Intro[] = [];
-    
-    constructor(private config:IntroConfig) {}
-    
+
+    constructor(private config: IntroConfig) { }
+
+    start(steps: IntroStep[] = null, selector: string = null) {
+        let introItems: IntroStep[];
+
+        if (isPresent(steps)) {
+            introItems = this.checkSteps(steps);
+        } else if (isPresent(selector)) {
+            introItems = this.findStepsFromSelector(selector);
+        } else {
+            throw new Error('Selector or steps must be provided');
+        }
+        // Start show
+        this.show(introItems);
+    }
+
+    /**
+     * Use steps passed programmatically
+     */
+    checkSteps(steps: IntroStep[]): IntroStep[] {
+        let introItems: IntroStep[] = [];
+
+        for (var i = 0; i < steps.length; i++) {
+            var currentItem: IntroStep = steps[i]; //_cloneObject(steps[i]);
+            //set the step
+            currentItem.step = introItems.length + 1;
+            // Get element
+            currentItem.element = this.getElement(currentItem.selector);
+            // If element is floating - change the position in step
+            if (currentItem.element.className === 'introjsFloatingElement') {
+                currentItem.position = 'floating';
+            }
+
+            introItems.push(currentItem);
+        }
+
+        return introItems;
+    }
+
     /**
      * Start the introduction for defined selector.
      */
-    startWithElement(selector:string = null) {
-        let targetEl:HTMLElement;
+    findStepsFromSelector(selector: string): IntroStep[] {
+        let introItems: IntroStep[];
+
+        let targetEl: HTMLElement;
         if (selector) {
             // Find element with selector
             targetEl = <HTMLElement>document.querySelector(selector);
             if (targetEl) {
-                this.introForElement(targetEl);
-            } else {
-                throw new Error('Cannot find element "' + selector + '"');
-            }
-        } else {
-            // Find any first element marked with ng2-intro directive
-            targetEl = <HTMLElement>document.querySelector('[ng2-intro]');
-            if (targetEl) {
-                this.introForElement(targetEl);
-            } else {
-                throw new Error('Cannot find element marked with "ng2-intro"');
+                introItems = this.findStepsForElement(targetEl);
             }
         }
-    }
-    
-    startWithSteps(steps:IntroStep[]) {
 
-    //use steps passed programmatically
-      for (var i = 0, stepsLength = steps.length; i < stepsLength; i++) {
-        var currentItem:IntroStep = steps[i]; //_cloneObject(steps[i]);
-        //set the step
-        currentItem.step = this._introItems.length + 1;
-        //use querySelector function only when developer used CSS selector
-        if (typeof(currentItem.element) === 'string') {
-          //grab the element with given selector from the page
-          currentItem.element = document.querySelector(currentItem.element);
+        return introItems || [];
+    }
+
+
+    /**
+     * Find element by selector or create the floating one.
+     */
+    getElement(selector: string): HTMLElement {
+        let targetEl: HTMLElement;
+
+        if (isPresent(selector)) {
+            targetEl = <HTMLElement>document.querySelector(selector);
         }
 
-        //intro without element
-        if (typeof(currentItem.element) === 'undefined' || currentItem.element == null) {
-          var floatingElementQuery = document.querySelector(".introjsFloatingElement");
+        if (!isPresent(targetEl)) {
+            var floatingElementQuery: HTMLElement = <HTMLElement>document.querySelector(".introjsFloatingElement");
 
-          if (floatingElementQuery == null) {
-            floatingElementQuery = document.createElement('div');
-            floatingElementQuery.className = 'introjsFloatingElement';
+            if (!isPresent(floatingElementQuery)) {
+                floatingElementQuery = document.createElement('div');
+                floatingElementQuery.className = 'introjsFloatingElement';
 
-            document.body.appendChild(floatingElementQuery);
-          }
+                document.body.appendChild(floatingElementQuery);
+            }
 
-          currentItem.element  = floatingElementQuery;
-          currentItem.position = 'floating';
+            targetEl = floatingElementQuery;
         }
 
-        if (currentItem.element != null) {
-          introItems.push(currentItem);
+        return targetEl;
+    }
+
+    private findStepsForElement(targetEl: HTMLElement): IntroStep[] {
+        let introItems: IntroStep[] = [];
+
+        //use steps from data-* annotations
+        var allIntroSteps: NodeListOf<HTMLElement> = <NodeListOf<HTMLElement>>targetEl.querySelectorAll('*[ng2-intro]');
+        if (allIntroSteps.length > 0) {
+            this.addStepsWithNumbers(introItems, allIntroSteps);
+            this.addStepsWithoutNumbers(introItems, allIntroSteps);
+            introItems = this.normalizeSteps(introItems);
+            this.sortSteps(introItems);
         }
-      }
-        
-        
+
+        return introItems;
     }
-    
-    private introForElement(targetEl:HTMLElement) {
-        
+
+    private addStepsWithNumbers(introItems: IntroStep[], allIntroSteps: NodeListOf<HTMLElement>) {
+        //first add intro items with data-step
+        for (var i = 0; i < allIntroSteps.length; i++) {
+            var currentElement: HTMLElement = allIntroSteps[i];
+            var step = parseInt(currentElement.getAttribute('data-step'), 10);
+
+            if (step > 0) {
+                introItems[step - 1] = <IntroStep>{
+                    element: currentElement,
+                    intro: currentElement.getAttribute('data-intro'),
+                    step: parseInt(currentElement.getAttribute('data-step'), 10),
+                    tooltipClass: currentElement.getAttribute('data-tooltipClass'),
+                    highlightClass: currentElement.getAttribute('data-highlightClass'),
+                    position: currentElement.getAttribute('data-position') || this.config.tooltipPosition
+                };
+            }
+        }
     }
-    
+
+    private addStepsWithoutNumbers(introItems: IntroStep[], allIntroSteps: NodeListOf<HTMLElement>) {
+        var nextStep = 0;
+        for (var i = 0; i < allIntroSteps.length; i++) {
+            var currentElement: HTMLElement = allIntroSteps[i];
+
+            if (!currentElement.hasAttribute('data-step')) {
+
+                // Find next no accomodated item in introItems array
+                while (isPresent(introItems[nextStep])) {
+                    nextStep++;
+                }
+
+                introItems[nextStep] = <IntroStep>{
+                    element: currentElement,
+                    intro: currentElement.getAttribute('data-intro'),
+                    step: nextStep + 1,
+                    tooltipClass: currentElement.getAttribute('data-tooltipClass'),
+                    highlightClass: currentElement.getAttribute('data-highlightClass'),
+                    position: currentElement.getAttribute('data-position') || this.config.tooltipPosition
+                };
+            }
+        }
+    }
+
+    normalizeSteps(introItems: IntroStep[]): IntroStep[] {
+        //removing undefined/null elements
+        var tempIntroItems: IntroStep[] = [];
+        for (var z = 0; z < introItems.length; z++) {
+            let item: IntroStep = introItems[z];
+            if (isPresent(item)) {
+                // copy non-empty values to the end of the array
+                tempIntroItems.push(item);
+            }
+        }
+        return tempIntroItems;
+    }
+
+    sortSteps(introItems: IntroStep[]) {
+        introItems.sort((a: IntroStep, b: IntroStep): number => {
+            return a.step - b.step;
+        });
+    }
+
+    /**********************/
+
+    private show(introItems: IntroStep[]) {
+
+    }
+
 }
