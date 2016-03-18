@@ -38,7 +38,7 @@ export function main() {
         it('should be defined', () => {
 //            const element = componentFixture.nativeElement;
 //            expect(element).toBeDefined();
-			expect(true).toBeThruly();
+			expect(true).toBeTruthy();
         });
     });
 }

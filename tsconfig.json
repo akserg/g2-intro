@@ -2,20 +2,23 @@
     "compilerOptions": {
         "noImplicitAny": true,
         "module": "commonjs",
-        "target": "ES5",
+        "target": "es5",
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
-        "inlineSourceMap": true,
-        "inlineSources": true,
         "declaration": true,
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+        "sourceMap": true
     },
     "files": [
         "typings/main.d.ts",
         "ng2-intro.ts",
         "./src/intro.config.ts",
-        "./src/intro.step.helper.ts",
+        "./src/intro.steps.helper.ts",
         "./src/intro.service.ts",
-        "./src/intro.directive.ts"
+        "./src/intro.directive.ts",
+        "./src/intro.overlay.ts",
+        "./tests/intro.factory.ts",
+        "./tests/intro.service.spec.ts",
+        "./tests/intro.component.spec.ts"
     ]
 }

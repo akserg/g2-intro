@@ -2,6 +2,9 @@
 // This project is licensed under the terms of the MIT license.
 // https://github.com/akserg/ng2-intro
 
+import {Injectable} from 'angular2/core';
+
+@Injectable()
 export class IntroOptions {
 
     constructor(
@@ -44,10 +47,13 @@ export class IntroOptions {
         /* Default hint position */
         public hintPosition:string = 'top-middle',
         /* Hint button label */
-        public hintButtonLabel:string = 'Got it')
+        public hintButtonLabel:string = 'Got it',
+        /* Steps */
+        public steps: IntroStep[] = null)
     {}
 }
 
+@Injectable()
 export class IntroStep {
 
     constructor(
@@ -61,6 +67,7 @@ export class IntroStep {
     ) {}
 }
 
-export class IntroConfig extends IntroOptions {
-    tooltipPosition:string = 'bottom';
-}
+// @Injectable()
+// export class IntroConfig extends IntroOptions {
+//     tooltipPosition:string = 'bottom';
+// }

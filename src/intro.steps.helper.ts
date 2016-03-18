@@ -15,11 +15,14 @@ export function checkSteps(steps: IntroStep[]): IntroStep[] {
     let introItems: IntroStep[] = [];
 
     for (var i = 0; i < steps.length; i++) {
-        var currentItem: IntroStep = steps[i]; //_cloneObject(steps[i]);
+        var currentItem: IntroStep = steps[i];
         //set the step
         currentItem.step = introItems.length + 1;
         // Get element
         currentItem.element = getElement(currentItem.selector);
+        if (!isPresent(currentItem.element)) {
+            currentItem.element = createDummyElement();
+        }
         // If element is floating - change the position in step
         if (currentItem.element.className === FLOAT_ELEMENT) {
             currentItem.position = 'floating';
@@ -32,39 +35,54 @@ export function checkSteps(steps: IntroStep[]): IntroStep[] {
 }
 
 /**
- * Start the introduction for defined selector.
+ * Find element by selector or create the floating one.
  */
-export function findStepsFromSelector(selector: string): IntroStep[] {
-    let introItems: IntroStep[];
-
+export function getElement(selector: string): HTMLElement {
     let targetEl: HTMLElement;
-    if (selector) {
-        // Find element with selector
+
+    if (isPresent(selector)) {
         targetEl = <HTMLElement>document.querySelector(selector);
-        if (targetEl) {
-            introItems = this.findStepsForElement(targetEl);
-        }
     }
 
-    return introItems || [];
+    return targetEl;
 }
 
-export function findStepsForElement(targetEl: HTMLElement): IntroStep[] {
+/**
+ * Create dummy element
+ */
+function createDummyElement() {
+    // We are looking for class - add 'dot' in front of FLOAT_ELEMENT
+    var dDummyElement: HTMLElement = <HTMLElement>document.querySelector('.' + FLOAT_ELEMENT);
+
+    if (!isPresent(dDummyElement)) {
+        dDummyElement = document.createElement('div');
+        dDummyElement.className = FLOAT_ELEMENT;
+
+        document.body.appendChild(dDummyElement);
+    }
+
+    return dDummyElement;
+}
+
+/**
+ * Start the introduction for defined selector.
+ */
+export function findStepsForElement(targetEl: HTMLElement, config:IntroConfig): IntroStep[] {
     let introItems: IntroStep[] = [];
 
     //use steps from data-* annotations
     var allIntroSteps: NodeListOf<HTMLElement> = <NodeListOf<HTMLElement>>targetEl.querySelectorAll('*[ng2-intro]');
     if (allIntroSteps.length > 0) {
-        this.addStepsWithNumbers(introItems, allIntroSteps);
-        this.addStepsWithoutNumbers(introItems, allIntroSteps);
-        introItems = this.normalizeSteps(introItems);
-        this.sortSteps(introItems);
+        addStepsWithNumbers(introItems, allIntroSteps, config);
+        addStepsWithoutNumbers(introItems, allIntroSteps, config);
+        introItems = normalizeSteps(introItems);
+        sortSteps(introItems);
     }
 
     return introItems;
 }
 
-export function addStepsWithNumbers(introItems: IntroStep[], allIntroSteps: NodeListOf<HTMLElement>) {
+function addStepsWithNumbers(introItems: IntroStep[], allIntroSteps: NodeListOf<HTMLElement>, config:IntroConfig) {
     //first add intro items with data-step
     for (var i = 0; i < allIntroSteps.length; i++) {
         var currentElement: HTMLElement = allIntroSteps[i];
@@ -77,13 +95,13 @@ export function addStepsWithNumbers(introItems: IntroStep[], allIntroSteps: Node
                 step: parseInt(currentElement.getAttribute('data-step'), 10),
                 tooltipClass: currentElement.getAttribute('data-tooltipClass'),
                 highlightClass: currentElement.getAttribute('data-highlightClass'),
-                position: currentElement.getAttribute('data-position') || this.config.tooltipPosition
+                position: currentElement.getAttribute('data-position') || config.tooltipPosition
             };
         }
     }
 }
 
-export function addStepsWithoutNumbers(introItems: IntroStep[], allIntroSteps: NodeListOf<HTMLElement>) {
+function addStepsWithoutNumbers(introItems: IntroStep[], allIntroSteps: NodeListOf<HTMLElement>, config:IntroConfig) {
     var nextStep = 0;
     for (var i = 0; i < allIntroSteps.length; i++) {
         var currentElement: HTMLElement = allIntroSteps[i];
@@ -101,13 +119,13 @@ export function addStepsWithoutNumbers(introItems: IntroStep[], allIntroSteps: N
                 step: nextStep + 1,
                 tooltipClass: currentElement.getAttribute('data-tooltipClass'),
                 highlightClass: currentElement.getAttribute('data-highlightClass'),
-                position: currentElement.getAttribute('data-position') || this.config.tooltipPosition
+                position: currentElement.getAttribute('data-position') || config.tooltipPosition
             };
         }
     }
 }
 
-export function normalizeSteps(introItems: IntroStep[]): IntroStep[] {
+function normalizeSteps(introItems: IntroStep[]): IntroStep[] {
     //removing undefined/null elements
     var tempIntroItems: IntroStep[] = [];
     for (var z = 0; z < introItems.length; z++) {
@@ -120,35 +138,8 @@ export function normalizeSteps(introItems: IntroStep[]): IntroStep[] {
     return tempIntroItems;
 }
 
-export function sortSteps(introItems: IntroStep[]) {
+function sortSteps(introItems: IntroStep[]) {
     introItems.sort((a: IntroStep, b: IntroStep): number => {
         return a.step - b.step;
     });
-}
-
-/**
- * Find element by selector or create the floating one.
- */
-function getElement(selector: string): HTMLElement {
-    let targetEl: HTMLElement;
-
-    if (isPresent(selector)) {
-        targetEl = <HTMLElement>document.querySelector(selector);
-    }
-
-    if (!isPresent(targetEl)) {
-        // We are looking for class - add 'dot' in front of
-        var floatingElementQuery: HTMLElement = <HTMLElement>document.querySelector('.' + FLOAT_ELEMENT);
-
-        if (!isPresent(floatingElementQuery)) {
-            floatingElementQuery = document.createElement('div');
-            floatingElementQuery.className = FLOAT_ELEMENT;
-
-            document.body.appendChild(floatingElementQuery);
-        }
-
-        targetEl = floatingElementQuery;
-    }
-
-    return targetEl;
 }
